@@ -4,9 +4,9 @@ class User(BaseModel):
     """Modelo de usuario para la creación de un nuevo usuario"""
     
     username: str = Field(min_length=3, max_length=50)
-    email: EmailStr = Field(unique=True)
+    email: EmailStr
     password: str = Field(min_length=8, max_length=64)
-    role: str = Field(default="user")
+    role: str = "user"
 
     class Config:
         str_strip_whitespace = True #? Para eliminar los espacios en blanco de los strings
