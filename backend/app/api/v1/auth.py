@@ -1,12 +1,14 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from app.schemas import User, ResponseUser
-from app.services import AuthService
+from app.api.v1.dependencies import get_auth_service
 
 router = APIRouter(tags=["auth"])
 
 @router.post("/register", response_model=ResponseUser)
-async def register(user: User):
+async def register(
+    user_data: User,
+    auth_service = Depends(get_auth_service)
+):
     """Registra un nuevo usuario"""
-    user = await AuthService().register_user(user.model_dump())
-    #? Devolvemos el objeto SQLAlchemy directamente ya que el Pydantic lo convierte automáticamente en el ResponseUser del endpoint
-    return user
+    db_user = await auth_service.register_user(user_data.model_dump())
+    return ResponseUser.model_validate(db_user)
