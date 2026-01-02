@@ -1,34 +1,30 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Any
-from app.extensions.database import AsyncSessionLocal
+from sqlalchemy.ext.asyncio import AsyncSession
 
 class BaseRepository:
-    def __init__(self, model: Any):
+    def __init__(self, model: Any, session: AsyncSession):
         self.model = model
+        self.session = session
 
     async def create(self, data: dict) -> Any:
         """Crea un nuevo registro en la BD desde un dict"""
-        async with AsyncSessionLocal() as session:
-            db_obj = self.model(**data)
-            session.add(db_obj)
-            await session.commit()
-            await session.refresh(db_obj)  # Para obtener el ID generado
-            return db_obj
+        db_obj = self.model(**data)
+        self.session.add(db_obj)
+        await self.session.flush()  # NO commit - lo maneja el servicio
+        await self.session.refresh(db_obj)  # Para obtener el ID generado
+        return db_obj
 
     async def get(self, id: str) -> Any:
-        async with AsyncSessionLocal() as session:
-            return await session.get(self.model, id)
+        return await self.session.get(self.model, id)
 
     async def update(self, obj: Any) -> Any:
-        async with AsyncSessionLocal() as session:
-            merged_obj = await session.merge(obj)
-            await session.commit()
-            await session.refresh(merged_obj)
-            return merged_obj
+        merged_obj = await self.session.merge(obj)
+        await self.session.flush()  # NO commit - lo maneja el servicio
+        await self.session.refresh(merged_obj)
+        return merged_obj
 
     async def delete(self, obj: Any) -> Any:
-        async with AsyncSessionLocal() as session:
-            merged_obj = await session.merge(obj)
-            await session.delete(merged_obj)
-            await session.commit()
-            return merged_obj
+        merged_obj = await self.session.merge(obj)
+        await self.session.delete(merged_obj)
+        await self.session.flush()  # NO commit - lo maneja el servicio
+        return merged_obj
