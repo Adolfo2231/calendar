@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
 from app.config import settings
-from app.models import BaseModel
+from app.models import BaseModel, User  # Importar modelos para que SQLAlchemy los registre
 
 # Crear engine asíncrono usando configuración
 engine = create_async_engine(
@@ -18,12 +18,10 @@ AsyncSessionLocal = async_sessionmaker(
 async def get_db() -> AsyncSession:
     """Dependency para obtener sesión de BD"""
     async with AsyncSessionLocal() as session:
-        try:
-            yield session
-        finally:
-            await session.close()
+        yield session
 
 async def init_db():
     """Crear todas las tablas en la base de datos"""
     async with engine.begin() as conn:
         await conn.run_sync(BaseModel.metadata.create_all)
+
