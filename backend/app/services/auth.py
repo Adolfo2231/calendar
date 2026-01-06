@@ -13,10 +13,15 @@ class AuthService:
             raise EmailExistError()
 
         if await self.user_repository.get_by_username(user_data["username"]):
-            raise UsernameExistError("Username already registered")
+            raise UsernameExistError()
         
-        user = await self.user_repository.create(user_data)
-        await self.session.commit()  # Commit a nivel de servicio
-        return user  # Devolvemos el objeto SQLAlchemy directamente ya que el Pydantic lo convierte automáticamente en el ResponseUser del endpoint
+        # Creación del usuario con manejo de transacciones
+        try:
+            user = await self.user_repository.create(user_data)
+            await self.session.commit()  # Commit a nivel de servicio
+            return user  # Devolvemos el objeto SQLAlchemy directamente ya que el Pydantic lo convierte automáticamente en el ResponseUser del endpoint
+        except Exception as e:
+            await self.session.rollback()  # Rollback en caso de error
+            raise  # Re-lanzar la excepción para que se maneje en el endpoint
 
     #TODO: añadir métodos para login, logout, forgot password, reset password
