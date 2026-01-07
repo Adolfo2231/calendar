@@ -1,3 +1,4 @@
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.repository import UserRepository
 from app.exception.bussines import EmailExistError, UsernameExistError
 
@@ -7,11 +8,12 @@ class AuthService:
     Servicio de autenticación con lógica de negocio.
     
     Maneja toda la lógica de negocio relacionada con autenticación.
-    Recibe el repository para acceder a datos cuando lo necesite.
+    Maneja las transacciones de BD (commit/rollback).
     """
     
-    def __init__(self, user_repository: UserRepository):
+    def __init__(self, user_repository: UserRepository, session: AsyncSession):
         self.user_repository = user_repository
+        self.session = session
     
     async def register_user(self, user_data: dict):
         """
@@ -20,6 +22,7 @@ class AuthService:
         Maneja toda la lógica de negocio:
         - Validaciones de existencia
         - Creación del usuario
+        - Manejo de transacciones (commit/rollback)
         
         Args:
             user_data: Datos del usuario a registrar
@@ -37,9 +40,12 @@ class AuthService:
         
         if await self.user_repository.get_by_username(user_data["username"]):
             raise UsernameExistError()
+        
         try:
             # Crear usuario
-            return await self.user_repository.create(user_data)
+            user = await self.user_repository.create(user_data)
+            await self.session.commit()
+            return user
         except Exception:
             await self.session.rollback()
             raise
