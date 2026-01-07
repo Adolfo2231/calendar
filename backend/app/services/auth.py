@@ -1,27 +1,47 @@
-from sqlalchemy.ext.asyncio import AsyncSession
 from app.repository import UserRepository
 from app.exception.bussines import EmailExistError, UsernameExistError
 
-class AuthService:
-    def __init__(self, session: AsyncSession):
-        self.session = session
-        self.user_repository = UserRepository(session)
 
+class AuthService:
+    """
+    Servicio de autenticación con lógica de negocio.
+    
+    Maneja toda la lógica de negocio relacionada con autenticación.
+    Recibe el repository para acceder a datos cuando lo necesite.
+    """
+    
+    def __init__(self, user_repository: UserRepository):
+        self.user_repository = user_repository
+    
     async def register_user(self, user_data: dict):
-        """Registra un nuevo usuario"""
+        """
+        Registra un nuevo usuario.
+        
+        Maneja toda la lógica de negocio:
+        - Validaciones de existencia
+        - Creación del usuario
+        
+        Args:
+            user_data: Datos del usuario a registrar
+            
+        Returns:
+            Usuario creado (objeto SQLAlchemy)
+            
+        Raises:
+            EmailExistError: Si el email ya existe
+            UsernameExistError: Si el username ya existe
+        """
+        # Validar existencia
         if await self.user_repository.get_by_email(user_data["email"]):
             raise EmailExistError()
-
+        
         if await self.user_repository.get_by_username(user_data["username"]):
             raise UsernameExistError()
-        
-        # Creación del usuario con manejo de transacciones
         try:
-            user = await self.user_repository.create(user_data)
-            await self.session.commit()  # Commit a nivel de servicio
-            return user  # Devolvemos el objeto SQLAlchemy directamente ya que el Pydantic lo convierte automáticamente en el ResponseUser del endpoint
-        except Exception as e:
-            await self.session.rollback()  # Rollback en caso de error
-            raise  # Re-lanzar la excepción para que se maneje en el endpoint
+            # Crear usuario
+            return await self.user_repository.create(user_data)
+        except Exception:
+            await self.session.rollback()
+            raise
 
     #TODO: añadir métodos para login, logout, forgot password, reset password
