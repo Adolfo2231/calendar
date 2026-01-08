@@ -7,3 +7,7 @@ class EmailExistError(HTTPException):
 class UsernameExistError(HTTPException):
     def __init__(self, detail: str = "Username already registered"):
         super().__init__(status_code=400, detail=detail)
+
+class ErrorAuthentication(HTTPException):
+    def __init__(self, detail: str = "Invalid email or password"):
+        super().__init__(status_code=401, detail=detail)
