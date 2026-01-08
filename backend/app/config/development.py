@@ -7,6 +7,7 @@ class DevelopmentSettings(Settings):
     ENVIRONMENT: str = "development"
     DATABASE_URL: str = "sqlite+aiosqlite:///./calendar.db"
     
-    class Config:
-        env_file = ".env.development"
+    class Config(Settings.Config):
+        env_file = ".env"  # Usar .env para desarrollo
+        case_sensitive = True
 
