@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.services import AuthService
 from app.repository import UserRepository
-from app.schemas import User, ResponseUser
+from app.schemas import User, ResponseUser, ResponseLogin, UserLogin
 
 
 class AuthFacade:
@@ -34,20 +34,29 @@ class AuthFacade:
         db_user = await self.auth_service.register_user(user_data.model_dump())
         return ResponseUser.model_validate(db_user)
 
-    async def login_user(self, user_data: User) -> ResponseUser:
+    async def login_user(self, user_data: UserLogin) -> ResponseLogin:
         """ 
         Inicia sesión de un usuario.
         
         El facade solo orquesta:
         1. Llama al Service que maneja toda la lógica de negocio y transacciones
-        2. Convierte a ResponseUser
+        2. Convierte a ResponseLogin
         
         Returns:
-            ResponseUser: Schema Pydantic listo para ser devuelto por el endpoint
+            ResponseLogin: Schema Pydantic con tokens y usuario
         """
-        # Service maneja toda la lógica de negocio
-        db_user = await self.auth_service.login_user(user_data.model_dump())
-        return ResponseUser.model_validate(db_user)
+        # Service maneja toda la lógica de negocio y devuelve dict con tokens y user
+        login_data = await self.auth_service.login_user(user_data.model_dump())
+        
+        # Convertir el user SQLAlchemy a ResponseUser
+        user_response = ResponseUser.model_validate(login_data["user"])
+        
+        # Retornar ResponseLogin con tokens y usuario
+        return ResponseLogin(
+            access_token=login_data["access_token"],
+            refresh_token=login_data["refresh_token"],
+            user=user_response
+        )
 
     async def logout_user(self) -> ResponseUser:
         """
