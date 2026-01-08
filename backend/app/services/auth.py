@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.repository import UserRepository
-from app.exception.bussines import EmailExistError, UsernameExistError
+from app.exception.bussines import EmailExistError, UsernameExistError, ErrorAuthentication
+from app.extensions.jwt import create_access_token, create_refresh_token
 
 
 class AuthService:
@@ -51,3 +52,41 @@ class AuthService:
             raise
 
     #TODO: añadir métodos para login, logout, forgot password, reset password
+    async def login_user(self, user_data: dict):
+        """
+        Inicia sesión de un usuario.
+        
+        Maneja toda la lógica de negocio:
+        - Validar que el usuario existe
+        - Verificar contraseña
+        - Generar tokens JWT
+        
+        Args:
+            user_data: Datos del usuario (email y password)
+            
+        Returns:
+            dict: Diccionario con access_token, refresh_token y user
+            
+        Raises:
+            ErrorAuthentication: Si el email no existe o la contraseña es incorrecta
+        """
+        # Buscar usuario por email
+        user = await self.user_repository.get_by_email(user_data["email"])
+        
+        # Validar que el usuario existe
+        if not user:
+            raise ErrorAuthentication()
+        
+        # Verificar contraseña
+        if not user.verify_password(user_data["password"]):
+            raise ErrorAuthentication()
+        
+        # Crear tokens con diccionario de datos
+        access_token = create_access_token({"sub": user.id})
+        refresh_token = create_refresh_token({"sub": user.id})
+        
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "user": user
+        }
