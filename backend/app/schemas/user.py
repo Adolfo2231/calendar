@@ -20,3 +20,12 @@ class ResponseUser(BaseModel):
 
     class Config:
         from_attributes = True #? Para convertir los objetos SQLAlchemy a Pydantic
+
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+class ResponseLogin(BaseModel):
+    access_token: str
+    refresh_token: str
+    user: ResponseUser
