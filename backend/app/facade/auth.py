@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.services import AuthService
+from app.services import AuthService, EmailService
 from app.repository import UserRepository
 from app.schemas import User, ResponseUser, ResponseLogin, UserLogin
 
@@ -14,10 +14,11 @@ class AuthFacade:
     - Convierte objetos SQLAlchemy a schemas Pydantic
     """
     
-    def __init__(self, session: AsyncSession):
+    def __init__(self, session: AsyncSession, email_service: EmailService):
         self.session = session
         self.user_repository = UserRepository(session)
         self.auth_service = AuthService(self.user_repository, session)
+        self.email_service = email_service  # Instancia de EmailService (objeto)
     
     async def register_user(self, user_data: User) -> ResponseUser:
         """
@@ -32,6 +33,18 @@ class AuthFacade:
         """
         # Service maneja toda la lógica de negocio y transacciones
         db_user = await self.auth_service.register_user(user_data.model_dump())
+        
+        # Enviar email de bienvenida (opcional, puede fallar sin afectar el registro)
+        try:
+            await self.email_service.send_registration_email(
+                email=db_user.email,
+                username=db_user.username
+            )
+        except Exception as e:
+            # Log del error pero no fallar el registro
+            print(f"⚠️ Error enviando email de bienvenida: {e}")
+            # El registro continúa normalmente aunque el email falle
+        
         return ResponseUser.model_validate(db_user)
 
     async def login_user(self, user_data: UserLogin) -> ResponseLogin:
