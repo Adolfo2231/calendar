@@ -32,6 +32,17 @@ class Settings(BaseSettings):
     # MCP Server (opcional)
     MCP_SERVER_URL: str = "http://localhost:8000/mcp"
     
+    # Email (mínimo necesario)
+    MAIL_USERNAME: str = ""
+    MAIL_PASSWORD: str = ""
+    MAIL_FROM: str = ""
+    MAIL_PORT: int = 587
+    MAIL_SERVER: str = ""
+    # Email opcionales (pueden estar en .env pero tienen valores por defecto)
+    MAIL_FROM_NAME: str = ""  # Opcional, si no se especifica usa el email
+    MAIL_TLS: bool = False  # Opcional, se detecta automáticamente según puerto
+    MAIL_SSL: bool = False  # Opcional, se detecta automáticamente según puerto
+    
     class Config:
         env_file = ".env"
         case_sensitive = True
