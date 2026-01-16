@@ -8,24 +8,14 @@ from app.config import settings
 # Puerto 465 → SSL/TLS
 port = settings.MAIL_PORT
 
-# Si ambos están en True (conflicto), usar detección automática según puerto
-# Si solo uno está en True, usar ese. Si ninguno está en True, usar detección automática
-if settings.MAIL_TLS and settings.MAIL_SSL:
-    # Conflicto: ambos en True, usar detección automática
+# Si hay conflicto (ambos True) o ninguno especificado, usar detección automática
+# Si solo uno está especificado, usar ese
+if (settings.MAIL_TLS and settings.MAIL_SSL) or (not settings.MAIL_TLS and not settings.MAIL_SSL):
     use_starttls = (port == 587)
     use_ssl_tls = (port == 465)
-elif settings.MAIL_TLS:
-    # Usuario especificó STARTTLS
-    use_starttls = True
-    use_ssl_tls = False
-elif settings.MAIL_SSL:
-    # Usuario especificó SSL
-    use_starttls = False
-    use_ssl_tls = True
 else:
-    # Ninguno especificado, usar detección automática
-    use_starttls = (port == 587)
-    use_ssl_tls = (port == 465)
+    use_starttls = settings.MAIL_TLS
+    use_ssl_tls = settings.MAIL_SSL
 
 conf = ConnectionConfig(
     MAIL_USERNAME=settings.MAIL_USERNAME,
