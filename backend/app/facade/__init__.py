@@ -7,6 +7,7 @@ the necessary services and repositories to complete it.
 """
 
 from app.facade.auth import AuthFacade
+from app.facade.event import EventFacade
 
-__all__ = ["AuthFacade"]
+__all__ = ["AuthFacade", "EventFacade"]
 
