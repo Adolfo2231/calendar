@@ -12,6 +12,7 @@ def create_app() -> FastAPI:
 
     # Incluir el router principal de la API v1
     app.include_router(api_router, prefix="/api/v1")
+    
 
     # Evento de startup: crear tablas si no existen
     @app.on_event("startup")
