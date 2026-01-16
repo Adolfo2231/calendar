@@ -1,5 +1,7 @@
 from typing import Any
 from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
+from sqlalchemy import select
 
 class BaseRepository:
     def __init__(self, model: Any, session: AsyncSession):
@@ -16,6 +18,9 @@ class BaseRepository:
 
     async def get(self, id: str) -> Any:
         return await self.session.get(self.model, id)
+    
+    async def get_all(self) -> List[Any]:
+        return await self.session.execute(select(self.model))
 
     async def update(self, obj: Any) -> Any:
         merged_obj = await self.session.merge(obj)
