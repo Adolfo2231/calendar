@@ -1,5 +1,6 @@
 import hashlib
 from sqlalchemy import Column, String, event
+from sqlalchemy.orm import relationship
 from .base import BaseModel
 
 
@@ -11,6 +12,8 @@ class User(BaseModel):
     email = Column(String(100), unique=True, nullable=False, index=True)
     password = Column(String(255), nullable=False)  # Hash de la contraseña
     role = Column(String(50), nullable=False, default="user")
+    
+    events = relationship("Event", back_populates="user")
     
     @staticmethod
     def _hash_password(password: str) -> str:
